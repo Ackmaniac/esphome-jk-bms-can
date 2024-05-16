@@ -95,8 +95,8 @@ esphome:
   platformio_options:
     upload_speed: 115200
     board_build.f_cpu: 240000000L
-    #board_build.mcu: esp32s2
-    #board_build.extra_flags:
+    # board_build.mcu: esp32s2
+    # board_build.extra_flags:
     #  - "-DARDUINO_USB_CDC_ON_BOOT=0"
 
 esp32:
@@ -108,8 +108,6 @@ esp32:
   framework:
     # type: arduino
     # version: recommended
-    # version: 2.0.3
-    # platform_version: 4.4.0
     
     type: esp-idf
     version: recommended
@@ -169,21 +167,21 @@ button:
     internal: true
 
 wifi:
-  reboot_timeout: 60min
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  #domain: !secret domain
-
+  # ssid: !secret wifi_ssid
+  # password: !secret wifi_password
+  
   ap:
-#    ssid: "Jk-Bms Fallback Hotspot"
-    password: "B3ytP03VQjeh"
+    password: "HJDC12345678"
+    ap_timeout: 20s
 
-#web_server:
-#  port: 80
-#  local: true
-#  auth:
-#    username: "HJDC" # !secret jk_bms_web_server_username
-#    password: "HJDC" # !secret jk_bms_web_server_password
+captive_portal:
+
+# web_server:
+#   port: 80
+#   local: true
+#   auth:
+#     username: "HJDC" # !secret jk_bms_web_server_username
+#     password: "HJDC" # !secret jk_bms_web_server_password
 
 ota:
 
@@ -217,11 +215,11 @@ light:
     internal: true
 
 uart:
-  id: uart_0
-  baud_rate: 115200
-  rx_buffer_size: 384
-  tx_pin: ${tx_pin}
-  rx_pin: ${rx_pin}
+  - id: uart_0
+    baud_rate: 115200
+    rx_buffer_size: 384
+    tx_pin: ${tx_pin}
+    rx_pin: ${rx_pin}
 
 jk_modbus:
   id: modbus0
@@ -714,7 +712,7 @@ sensor:
     id: source_sensor
     pin: GPIO2
     update_interval: never
-    attenuation: 11dB
+    attenuation: 12dB
   - platform: resistance
     id: resistance_sensor
     sensor: source_sensor
