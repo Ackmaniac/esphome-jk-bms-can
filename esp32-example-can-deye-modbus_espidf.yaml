@@ -190,6 +190,7 @@ captive_portal:
 #     password: "HJDC" # !secret jk_bms_web_server_password
 
 ota:
+  - platform: esphome
 
 logger:
   baud_rate: 115200
