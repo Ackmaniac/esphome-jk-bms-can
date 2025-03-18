@@ -596,6 +596,7 @@ class JkBms : public PollingComponent, public jk_modbus::JkModbusDevice {
   } cells_[24];
 
   bool enable_fake_traffic_;
+  bool send_other_fake_message_ = true;
   bool states_updated_ = false;
   bool top_balancing_enabled_ = true;
 
@@ -622,7 +623,7 @@ class JkBms : public PollingComponent, public jk_modbus::JkModbusDevice {
   
   bool chargeCurrentIsLimited = false;
   bool dischargeCurrentIsLimited = false;
-
+  
   float minCharge;
   float minDischarge;
 
@@ -666,6 +667,11 @@ class JkBms : public PollingComponent, public jk_modbus::JkModbusDevice {
   };
 
   bool check_bit_(uint8_t mask, uint8_t flag) { return (mask & flag) == flag; }
+
+  void update_send_other_fake_message_() {
+    send_other_fake_message_ = !send_other_fake_message_;
+  }
+
 };
 
 }  // namespace jk_bms
