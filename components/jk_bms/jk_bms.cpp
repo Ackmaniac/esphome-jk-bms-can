@@ -396,7 +396,7 @@ void JkBms::update() {
   this->read_registers(FUNCTION_READ_ALL, ADDRESS_READ_ALL);
 
   if (this->enable_fake_traffic_) {
-    if (sendOtherFake) {
+    if (this->send_other_fake_message_) {
       // Start: 0x4E, 0x57, 0x01, 0x1B, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x01
       this->on_jk_modbus_data(
           FUNCTION_READ_ALL,
@@ -440,9 +440,9 @@ void JkBms::update() {
           });
       // End: 0x00 0x00 0x00 0x00 0x68 0x00 0x00 0x54 0xD1
     }
-    
-    sendOtherFake = !sendOtherFake;
 
+    update_send_other_fake_message_();
+    
     // Start: 0x4E, 0x57, 0x01, 0x18, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x01
     /*
     this->on_jk_modbus_data(
