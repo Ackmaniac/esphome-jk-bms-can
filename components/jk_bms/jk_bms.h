@@ -627,6 +627,8 @@ class JkBms : public PollingComponent, public jk_modbus::JkModbusDevice {
   float minCharge;
   float minDischarge;
 
+  uint16_t publish_all_states_counter_ = 0;
+
   void on_status_data_(const std::vector<uint8_t> &data);
   void publish_state_(binary_sensor::BinarySensor *binary_sensor, const bool &state);
   void publish_state_(sensor::Sensor *sensor, float value);
