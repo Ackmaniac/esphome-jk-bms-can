@@ -1,0 +1,165 @@
+# Enable Home Assistant API
+#api:
+#  encryption:
+#    key: "UM1ow3iT15L7uBi5/YqCOnlXZPeKyosjBZNl2hzcfsM="
+
+#ota:
+#  password: "50be2a475f519ff0d6c932f08a7fd9cf"
+
+
+
+# Version info, for full change log:- https://github.com/Uksa007/esphome-jk-bms-can/discussions/2
+# V1.13.3 Improve compatibility with Deye and other inverters
+# V1.13.2 Send Max Temperature of T1, T2 to inverter
+# V1.13.1 Fix compile issues with new version of ESPhome 2023.4.0, set rebulk offset to 2.5
+substitutions:
+# --------------------------
+# prefix name that will appear in esphome and homeassistant for JK BMS entitys.
+  jk_name: JK
+
+# prefix name that will appear in esphome and homeassistant for Deye Inverter entitys.
+  deye_name: Deye
+  
+# --------------------------
+# Number of Battery modules max 8. Each LX U5.4-L battery is 5.4kWh, select the number closest to your capactiy eg 3.2V * 280Ah * 16 = 14.3kWh
+  batt_modules: "3"
+
+# --------------------------------------
+# Battery Charging setting:
+# This is max charging amps eg 50A, for Bulk - Constant Current charging(CC), should be at least 10A less than BMS charge current protection, 0.5C max 
+# will be automatically limited to 95% BMS charge current protection
+  charge_a: "100"
+
+# the minimum the charge current can be reduced to, if a limit caluclates a lower value charging will be set to 0 (off)
+  min_charge_a: "2"
+
+# Balance Voltage for Constant Voltage charging(CV). This is the balance voltage you want the inverter to charge with 3.45v per cell. Value will be multiplied by cells reported from the BMS. 
+  balance_v: "55.3"
+
+  # this controller takes care when balancing is finished
+  balance_delta: "0.005"
+
+  balance_v_slider_min: "52.8" # (3.3 * 16 cells = 52.8) min value for GUI slider, recommended LiFePo4 = 3.3, LiIon = 3.8
+  balance_v_slider_max: "58.4"  # (3.65 * 16 cells = 58.4) max value for GUI slider, recommended LiFePo4 = 3.6, LiIon = 4.2
+
+# Absorption time in seconds to hold charge voltage after charge voltage is reached eg 120 seconds
+# timer will be reset if balance voltage is not reached yet when balance voltage is set higher than absorption voltage
+# and will also be reset when balancing is active
+  absorption_time: "60"
+
+# --------------------------------------
+# Battery Discharge setting:
+# Max discharge amps eg 100, should be at least 10A less than BMS over dischange current protection, 0.5C max
+# will be reset if higher than 95% of overdischarge current protection of the BMS
+  discharge_a: "100"
+
+# the minimum the discharge current can be reduced to, if a limit caluclates a lower value discharging will be set to 0 (off)
+  min_discharge_a: "2"
+
+# Minimum discharge voltage eg 48v/16 = 3V per cell
+  min_dischange_v: "48"
+
+  min_dischange_v_slider_min: "40"   # (2.5 * 16 cells = 40)   min value for GUI slider, recommended LiFePo4 = 2.5, LiIon = 2.5
+  min_dischange_v_slider_max: "51.2" # (3.2 * 16 cells = 51.2) min value for GUI slider, recommended LiFePo4 = 3.2, LiIon = 3.5
+
+# --------------------------------------
+# Battery State of Health (SOH) setting:
+# Maximum charging cycles is used to calculate the battey SOH, LF280K=6000.0 LF280=3000.0 (decimal is required)
+  max_cycles: "6000.0"
+
+# --------------------------------------
+# Aditional wire ntc temperature sensor which is connected directly to the ESP.
+# Will start to reduce current at temperature_wire_recovery and set current to 0 at temperature_wire_protection.
+  use_wire_temperature_sensor: "false"
+  temperature_wire_recovery: "80.0"
+  temperature_wire_protection: "100.0"
+
+# --------------------------------------
+# ESP32 CAN/Serail port pins:
+# GPIO pins your CAN bus transceiver(TJA1050) is connected to the ESP, note! TX->TX and RX->RX. 
+  can_tx_pin: GPIO7 # GPIO23
+  can_rx_pin: GPIO9 # GPIO22
+# GPIO pins your JK-BMS RS485(TTL) is connected to the ESP TX->RX and RX->TX. 
+  tx_pin: GPIO18 # GPIO17
+  rx_pin: GPIO16 # GPIO16
+
+# GPIO pins your Modbus controller is connected to the ESP, note! TX->TX and RX->RX. 
+  modbus_tx_pin: GPIO11
+  modbus_rx_pin: GPIO12
+
+# --------------------------------------
+#### Don't make changes below this ####
+  external_components_source: github://Ackmaniac/esphome-jk-bms-can@main # TODO set to main
+
+esphome:
+  name: hjdc          
+  friendly_name: HJDC # (H)ome Assistant - (J)K - (D)eye - (C)ontroller
+  #on_boot:
+  #  then:
+  #    - switch.turn_on: inverter_charging
+  #    - switch.turn_on: inverter_discharging
+  platformio_options:
+    upload_speed: 115200
+    board_build.f_cpu: 240000000L
+    #board_build.mcu: esp32s2
+    #board_build.extra_flags:
+    #  - "-DARDUINO_USB_CDC_ON_BOOT=0"
+
+esp32:
+#  board: esp32doit-devkit-v1
+  
+  board: lolin_s2_mini
+  variant: ESP32S2
+
+  framework:
+    type: arduino
+    version: recommended
+    # version: 2.0.3
+    # platform_version: 4.4.0
+    
+    # type: esp-idf
+    # version: recommended
+    # sdkconfig_options:
+    #   CONFIG_ESP_CONSOLE_USB_CDC: y
+    
+
+external_components:
+  - source: ${external_components_source}
+    refresh: 0s
+
+wifi:
+  # reboot_timeout: 60min
+  # ssid: !secret wifi_ssid
+  # password: !secret wifi_password
+  #domain: !secret domain
+
+  ap:
+    password: "HJDC12345678"
+
+captive_portal:
+
+web_server:
+  port: 80
+  local: true
+  auth:
+    username: "HJDC" # !secret jk_bms_web_server_username
+    password: "HJDC" # !secret jk_bms_web_server_password
+
+ota:
+
+logger:
+  baud_rate: 115200
+  hardware_uart: USB_CDC # USB_CDC
+  level: INFO
+
+# Please use the native `api` component instead of the `mqtt` section
+# if you use Home Assistant. The native API is more lightweight.
+api:
+  reboot_timeout: 1440min
+
+#mqtt:
+#  broker: !secret mqtt_host
+#  username: !secret mqtt_username
+#  password: !secret mqtt_password
+#  id: mqtt_client
+
