@@ -19,10 +19,10 @@ CONFIG_SCHEMA = (
         {
             cv.GenerateID(): cv.declare_id(JkBms),
             cv.Optional(CONF_ENABLE_FAKE_TRAFFIC, default=False): cv.boolean,
-            cv.Optional(CONF_UPDATE_INTERVALL, default="1s"): cv.positive_time_period_seconds,
+            cv.Optional(CONF_UPDATE_INTERVALL, default="1s"): cv.positive_time_period_milliseconds,
         }
     )
-    .extend(cv.polling_component_schema(config[CONF_UPDATE_INTERVALL]))
+    .extend(cv.polling_component_schema("3s"))
     .extend(jk_modbus.jk_modbus_device_schema(0x4E))
 )
 
