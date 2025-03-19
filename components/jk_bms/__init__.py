@@ -9,7 +9,6 @@ MULTI_CONF = True
 
 CONF_JK_BMS_ID = "jk_bms_id"
 CONF_ENABLE_FAKE_TRAFFIC = "enable_fake_traffic"
-CONF_UPDATE_INTERVALL = "update_intervall"
 
 jk_bms_ns = cg.esphome_ns.namespace("jk_bms")
 JkBms = jk_bms_ns.class_("JkBms", cg.PollingComponent, jk_modbus.JkModbusDevice)
@@ -19,7 +18,6 @@ CONFIG_SCHEMA = (
         {
             cv.GenerateID(): cv.declare_id(JkBms),
             cv.Optional(CONF_ENABLE_FAKE_TRAFFIC, default=False): cv.boolean,
-            cv.Optional(CONF_UPDATE_INTERVALL, default="1s"): cv.positive_time_period_milliseconds,
         }
     )
     .extend(cv.polling_component_schema("1s"))
