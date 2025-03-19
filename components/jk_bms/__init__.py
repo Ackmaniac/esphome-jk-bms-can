@@ -22,7 +22,7 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_UPDATE_INTERVALL, default="1s"): cv.positive_time_period_milliseconds,
         }
     )
-    .extend(cv.polling_component_schema("3s"))
+    .extend(cv.polling_component_schema(CONF_UPDATE_INTERVALL))
     .extend(jk_modbus.jk_modbus_device_schema(0x4E))
 )
 
