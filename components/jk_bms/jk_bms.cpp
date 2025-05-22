@@ -99,24 +99,41 @@ void JkBms::on_status_data_(const std::vector<uint8_t> &data) {
   uint8_t min_voltage_cell = 0;
   uint8_t max_voltage_cell = 0;
 
+  float maxCellVoltageToCheck = this->max_cell_voltage_sensor_->get_state() + 0.15f;
+  float minCellVoltageToCheck = this->min_cell_voltage_sensor_->get_state() - 0.15f;
+  float cellVoltages[cells];
+  
   for (uint8_t i = 0; i < cells; i++) {
-    float cell_voltage = (float) jk_get_16bit(i * 3 + 3) * 0.001f;
+    cellVoltages[i] = (float) jk_get_16bit(i * 3 + 3) * 0.001f;
     average_cell_voltage = average_cell_voltage + cell_voltage;
-    if (cell_voltage < min_cell_voltage) {
-      min_cell_voltage = cell_voltage;
+    if (cellVoltages[i] < min_cell_voltage) {
+      min_cell_voltage = cellVoltages[i];
       min_voltage_cell = i + 1;
     }
-    if (cell_voltage > max_cell_voltage) {
-      max_cell_voltage = cell_voltage;
+    if (cellVoltages[i] > max_cell_voltage) {
+      max_cell_voltage = cellVoltages[i];
       max_voltage_cell = i + 1;
     }
-
-    // check for valid cell voltages, it can happen that the data contains wrong data, in this case abort the data processing
-    if (cell_voltage > 5.0f) {
-        ESP_LOGW(TAG, "Invalid cell voltage, ignore data!");
-        return;
+  }
+  // check for valid cell voltages, it can happen that the data contains wrong data, in this case abort the data processing.
+  // but only do this once. When strange data is send the second time accept it because maybe something is indeed wrong with the battery.
+  if (this->last_data_was_valid) {
+    if (max_cell_voltage > maxCellVoltageToCheck) {
+      ESP_LOGW(TAG, "Invalid too high cell voltage, ignore data!");
+      this->last_data_was_valid = false;
+      return;
     }
-    this->publish_state_(this->cells_[i].cell_voltage_sensor_, cell_voltage);
+    if (min_cell_voltage < minCellVoltageToCheck) {
+      ESP_LOGW(TAG, "Invalid too low cell voltage, ignore data!");
+      this->last_data_was_valid = false;
+      return;
+    }
+  } else {
+    this->last_data_was_valid = true;
+  }
+
+  for (uint8_t i = 0; i < cells; i++) {
+    this->publish_state_(this->cells_[i].cell_voltage_sensor_, cellVoltages[i]);
   }
   
   this->publish_state_(this->cells_sensor_, cells);

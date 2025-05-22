@@ -79,22 +79,22 @@ substitutions:
 # --------------------------------------
 # ESP32 CAN/Serail port pins:
 # GPIO pins your CAN bus transceiver(TJA1050) is connected to the ESP, note! TX->TX and RX->RX. 
-  can_tx_pin: GPIO7 # GPIO23
-  can_rx_pin: GPIO9 # GPIO22
+  can_tx_pin: GPIO11 # GPIO7 # GPIO23
+  can_rx_pin: GPIO12  # GPIO9 # GPIO22
 # GPIO pins your JK-BMS RS485(TTL) is connected to the ESP TX->RX and RX->TX. 
-  tx_pin: GPIO20 # GPIO17
-  rx_pin: GPIO21 # GPIO16
+  tx_pin: GPIO15 # GPIO20 # GPIO17
+  rx_pin: GPIO16 # GPIO21 # GPIO16
   
-  tx2_pin: GPIO18 # GPIO17
-  rx2_pin: GPIO16 # GPIO16
+  tx2_pin: GPIO17 # GPIO17
+  rx2_pin: GPIO18 # GPIO16
 
 # GPIO pins your Modbus controller is connected to the ESP, note! TX->TX and RX->RX. 
-  modbus_tx_pin: GPIO11
-  modbus_rx_pin: GPIO12
+  modbus_tx_pin: GPIO9 # GPIO11
+  modbus_rx_pin: GPIO10 # GPIO12
 
 # --------------------------------------
 #### Don't make changes below this ####
-  external_components_source: github://Ackmaniac/esphome-jk-bms-can@main # TODO set to main
+  external_components_source: github://Ackmaniac/esphome-jk-bms-can@TestMulti # TODO set to main
 
 esphome:
   name: hjdc          
@@ -104,26 +104,58 @@ esphome:
   #    - switch.turn_on: inverter_charging
   #    - switch.turn_on: inverter_discharging
   platformio_options:
-    upload_speed: 115200
-    board_build.f_cpu: 240000000L
+    # upload_speed: 115200
+    # board_build.f_cpu: 240000000L
+    
+    board_build.flash_mode: dio
     # board_build.mcu: esp32s2
     # board_build.extra_flags:
     #  - "-DARDUINO_USB_CDC_ON_BOOT=0"
+  on_boot:
+    - delay: 0.2s
+    - light.turn_on:
+        id: led_ww
+        red: 100%
+        brightness: 60%
 
 esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    
+    version: recommended
+    #version: '4.4.6'
+    #platform_version: '5.4.0'
+    sdkconfig_options:
+      CONFIG_ESP32_S3_BOX_BOARD: "y"
+      CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"
+      CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM: "512"
+      CONFIG_TCPIP_RECVMBOX_SIZE: "512"
+      CONFIG_TCP_SND_BUF_DEFAULT: "65535"
+      CONFIG_TCP_WND_DEFAULT: "512000"
+      CONFIG_TCP_RECVMBOX_SIZE: "512"
+
+psram:
+  mode: octal # Please change this to quad for N8R2 and octal for N16R8
+  speed: 80MHz
+
+
+#esp32:
 #  board: esp32doit-devkit-v1
   
-  board: lolin_s2_mini
-  variant: ESP32S2
-
-  framework:
-    # type: arduino
-    # version: recommended
+#  board: lolin_s2_mini
+#  variant: ESP32S2
+  
+#  framework:
+#    # type: arduino
+#    # version: recommended
     
-    type: esp-idf
-    version: recommended
-    sdkconfig_options:
-      CONFIG_ESP_CONSOLE_USB_CDC: y
+#    type: esp-idf
+#    version: recommended
+#      sdkconfig_options:
+#        CONFIG_ESP_CONSOLE_USB_CDC: y
     
 
 external_components:
@@ -198,14 +230,25 @@ ota:
   - platform: esphome
 
 logger:
-  baud_rate: 115200
-  hardware_uart: USB_CDC
+#  baud_rate: 0 # 115200
+#  hardware_uart: UART0 # USB_CDC
   level: INFO
 
 # Please use the native `api` component instead of the `mqtt` section
 # if you use Home Assistant. The native API is more lightweight.
 api:
   reboot_timeout: 1440min
+  encryption:
+    key: "lEmP5eYDbbYRg73XWJdFraALUj8/lYTCY9kGQnTanZM="
+  on_client_connected:
+    then:
+      - light.turn_off: led_ww
+  on_client_disconnected:
+    then:
+      - light.turn_on:
+          id: led_ww
+          red: 100%
+          brightness: 60%
 
 #mqtt:
 #  broker: !secret mqtt_host
@@ -215,7 +258,7 @@ api:
 
 output:
   - platform: gpio
-    pin: 15 # 2
+    pin: GPIO2 # 15 # 2
     id: led
     inverted: false
 
@@ -225,6 +268,15 @@ light:
     id: led_builtin
     name: "${jk_name} Builtin LED"
     internal: true
+  - platform: esp32_rmt_led_strip
+    id: led_ww
+    rgb_order: GRB
+    pin: GPIO48
+    num_leds: 1
+    #rmt_channel: 0
+    chipset: ws2812
+    name: "On board light"
+    default_transition_length: 0.1s
 
 uart:
   - id: uart_0
@@ -266,9 +318,12 @@ jk_modbus:
 jk_bms:
   - id: bms0
     jk_modbus_id: modbus_jk_0
+    enable_fake_traffic: true # TODO disable
+    update_interval: "3s"
   - id: bms1
     jk_modbus_id: modbus_jk_1
-  # enable_fake_traffic: true # TODO disable
+    enable_fake_traffic: true # TODO disable
+    update_interval: "3s"
 
 canbus:
   - platform: esp32_can
@@ -276,6 +331,9 @@ canbus:
     rx_pin: ${can_rx_pin}
     can_id: 4
     bit_rate: 500kbps
+    # rx_queue_len: 128
+    # tx_queue_len: 128
+    # use_extended_id: True
     on_frame:
     - can_id: 0x305 # SMA/LG/Pylon/Goodwe reply   PYLON_CAN_NETWORK_ALIVE_MSG_FRAME_ID        
       then:
@@ -299,7 +357,7 @@ interval:
             - delay: 1ms
             - component.update: source_sensor
             - switch.turn_off: ntc_vcc
-  - interval: 10ms
+  - interval: 2000ms
     then:
       # Start CAN Handling
       - if:
@@ -316,6 +374,10 @@ interval:
                 id(bms0).set_states_updated(false);
                 if (${dual_bms}) id(bms1).set_states_updated(false);
                 id(canStepCounter) = 1;
+
+                // REMOVE REMOVE REMOVE
+                id(canStepCounter) = 2;
+
                 return true;
               } else if (id(canStepCounter) != 0) {
                 if (id(can_305_rx) > 30) {
@@ -332,7 +394,10 @@ interval:
               } else if (id(no_uart_update_counter)++ >= 500) { // 500 is 500x10ms = 5000ms = 5s
                 id(uart_missing_error) = true;
                 id(no_uart_update_counter) = 400;
+
+                
                 id(canStepCounter) = 1;
+
                 return true;
               }
               return false;
@@ -477,23 +542,33 @@ interval:
                       }
 
                       // # set esphome "charging_current" to match with max bms "charging_overcurrent_protection"
-                      if (id(charging_current).state > id(charging_overcurrent_protection).state * 0.975f) {
-                        id(charging_current).publish_state(id(charging_overcurrent_protection).state * 0.975f);
+                      if (id(charging_current).state > id(charging_overcurrent_protection).state * 0.975f * (${dual_bms} ? 2 : 1)) {
+                        id(charging_current).publish_state(id(charging_overcurrent_protection).state * 0.975f * (${dual_bms} ? 2 : 1));
+                      }
+                      if (${dual_bms}) {
+                        if (id(charging_current).state > id(charging_overcurrent_protection_2).state * 0.975f * (${dual_bms} ? 2 : 1)) {
+                          id(charging_current).publish_state(id(charging_overcurrent_protection_2).state * 0.975f * (${dual_bms} ? 2 : 1));
+                        }
                       }
 
                       // # set esphome "discharging_current" to match with max bms "discharging_overcurrent_protection"
-                      if (id(discharging_current).state > id(discharging_overcurrent_protection).state * 0.975f) {
-                        id(discharging_current).publish_state(id(discharging_overcurrent_protection).state * 0.975f);
+                      if (id(discharging_current).state > id(discharging_overcurrent_protection).state * 0.975f * (${dual_bms} ? 2 : 1)) {
+                        id(discharging_current).publish_state(id(discharging_overcurrent_protection).state * 0.975f * (${dual_bms} ? 2 : 1));
+                      }
+                      if (${dual_bms}) {
+                        if (id(discharging_current).state > id(discharging_overcurrent_protection_2).state * 0.975f * (${dual_bms} ? 2 : 1)) {
+                          id(discharging_current).publish_state(id(discharging_overcurrent_protection_2).state * 0.975f * (${dual_bms} ? 2 : 1));
+                        }
                       }
 
                       // # startCalculuation
-                      id(bms0).initCurrentValues(min(id(charging_overcurrent_protection).state * 0.975f, id(charging_current).state),
-                                                 min(id(discharging_overcurrent_protection).state * 0.975f, id(discharging_current).state),
+                      id(bms0).initCurrentValues(min(id(charging_overcurrent_protection).state * 0.975f, id(charging_current).state / (${dual_bms} ? 2 : 1)),
+                                                 min(id(discharging_overcurrent_protection).state * 0.975f, id(discharging_current).state / (${dual_bms} ? 2 : 1)),
                                                  ${min_charge_a},
                                                  ${min_discharge_a});
                       if (${dual_bms}) {
-                        id(bms1).initCurrentValues(min(id(charging_overcurrent_protection_2).state * 0.975f, id(charging_current).state),
-                                                   min(id(discharging_overcurrent_protection_2).state * 0.975f, id(discharging_current).state),
+                        id(bms1).initCurrentValues(min(id(charging_overcurrent_protection_2).state * 0.975f, id(charging_current).state / (${dual_bms} ? 2 : 1)),
+                                                   min(id(discharging_overcurrent_protection_2).state * 0.975f, id(discharging_current).state / (${dual_bms} ? 2 : 1)),
                                                    ${min_charge_a},
                                                    ${min_discharge_a});
                       }
@@ -684,66 +759,78 @@ interval:
                         id(charge_status) = "Disabled";
                         id(chargingAllowed) = false;
                         id(dischargingAllowed) = false;
+
                       } else {
-                        // at least one bms switch is enabled and inverter set to charging and status is to % or top balancing
-                        if (   (id(charging_switch).state 
-                                || (${dual_bms} && id(charging_switch_2).state)
-                               )
-                            && id(inverter_charging).state
-                            && (   id(charge_status).substr(0, id(charge_to).length()) == id(charge_to)
-                                || id(charge_status) == "Top Balancing") 				     // Overides to disable charging
-                          )
-                        {
-                          // to top balacing or all bms below max charge
-                          if (id(charge_status) == "Top Balancing"
-                              || (id(capacity_remaining).state < id(max_charge).state)
-                                  && (   !${dual_bms}
-                                      || id(capacity_remaining_2).state < id(max_charge).state
-                                     )
-                                 ) {
-                            id(chargingAllowed) = true;
-                          // at least one bms above max charge
-                          } else if (   id(capacity_remaining).state > id(max_charge).state
-                                     && (   !${dual_bms}
-                                         || id(capacity_remaining_2).state > id(max_charge).state
-                                        )
-                                    ) {
-                            id(chargingAllowed) = false;
-                          // when exatctly at max charge keep on going what you actually do, 1% hysteresis
-                          } else {
-                            // id(capacity_remaining).state = id(max_charge).state
-                            // leave the value of id(chargingAllowed) as it is
-                          }
-                        } else {
-                          id(chargingAllowed) = false;
-                        }
                         
-                        if (   (   id(discharging_switch).state 
-                                || (   ${dual_bms}
-                                    && id(discharging_switch_2).state
+                        // at least one bms switch is enabled and inverter set to charging and status is to % or top balancing
+                        // calc chargingAllowed
+                        if (   !id(inverter_charging).state                                                     // disallowed by HJDC
+                            || (  id(charge_status).substr(0, id(charge_to).length()) == id(charge_to)          // SOC is too high on one of the batteries that allowes charging
+                                && (   (   id(charging_switch).state
+                                         && id(capacity_remaining).state > id(max_charge).state
+                                       )
+                                     || (   ${dual_bms}
+                                         && (   id(charging_switch).state
+                                             && id(capacity_remaining_2).state > id(max_charge).state
+                                           )
+                                       )
                                    )
                                )
-                            && id(inverter_discharging).state)
+                            || (   !id(charging_switch).state                                                   // all batterys disallo charging
+                                && (   !${dual_bms}
+                                    || !id(charging_switch_2).state
+                                   )
+                               )
+                           )
                         {
-                          if (id(capacity_remaining).state < id(min_discharge).state
-                              || (   ${dual_bms}
-                                  && id(capacity_remaining_2).state < id(min_discharge).state
-                                 )
-                             ) {
-                            id(dischargingAllowed) = false;
-                          } else if (id(capacity_remaining).state > id(min_discharge).state
-                                     && (   !${dual_bms}
-                                         || id(capacity_remaining_2).state > id(min_discharge).state
-                                        )
-                                    ) {
-                            id(dischargingAllowed) = true;
-                          } else {
-                            // id(capacity_remaining).state = id(min_discharge).state
-                            // leave the value of id(dischargingAllowed) as it is
-                          }
-                        } else {
+                          id(chargingAllowed) = false;
+                        } else if (   id(charge_status) == "Top Balancing"                                      // top balancing is swithced on
+                                   || (   id(charge_status).substr(0, id(charge_to).length()) == id(charge_to)  // SOC is too low on one of the switched on batteries
+                                       && (   (   id(charging_switch).state
+                                               && id(capacity_remaining).state < id(max_charge).state
+                                               )
+                                           && (   !${dual_bms}
+                                               || (   id(charging_switch_2).state
+                                                   && id(capacity_remaining_2).state < id(max_charge).state
+                                                  )
+                                              )
+                                          )
+                                      )
+                                  )
+                        {
+                          id(chargingAllowed) = true;
+                        } // else leave the status as it is as histeresis, so don't do anything
+                        
+                        // calc dischargingAllowed
+                        if (    !id(inverter_discharging).state
+                            || (   id(discharging_switch).state
+                                && id(capacity_remaining).state < id(min_discharge).state
+                               )
+                            || (   ${dual_bms}
+                                && (   id(discharging_switch_2).state
+                                    && id(capacity_remaining_2).state < id(min_discharge).state
+                                   )
+                               )
+                            || (   !id(discharging_switch).state
+                                && (   !${dual_bms}
+                                    || !id(discharging_switch_2).state
+                                   )
+                               )
+                           )
+                        {
                           id(dischargingAllowed) = false;
-                        }
+                        } else if (   (   !id(discharging_switch).state
+                                       || id(capacity_remaining).state > id(min_discharge).state
+                                      )
+                                   && (   !${dual_bms}
+                                       || (   !id(discharging_switch_2).state
+                                           || id(capacity_remaining_2).state > id(min_discharge).state
+                                          )
+                                      )
+                                  )
+                        {
+                          id(dischargingAllowed) = true;
+                        } // else leave the status as it is as histeresis, so don't do anything
 
                         if (id(chargingAllowed)) {
 
@@ -777,6 +864,7 @@ interval:
                             }
                           }
                         }
+
                         if (id(dischargingAllowed)) {
                           if (!${dual_bms}) {
                             discharge_volt = id(bms0).getLimitedDischargeVoltage();
@@ -824,11 +912,51 @@ interval:
                       if (id(send_inverter_discharge_current).state != uint16_t(discharge_amp * 10) / 10.0)  id(send_inverter_discharge_current).publish_state(uint16_t(discharge_amp * 10) / 10.0);
                       if (id(send_inverter_discharge_voltage).state != uint16_t(discharge_volt * 10) / 10.0) id(send_inverter_discharge_voltage).publish_state(uint16_t(discharge_volt * 10) / 10.0);
 
-                      if (id(limited_charge_current_reason).state != id(bms0).getLimitedChargeCurrentReason()) id(limited_charge_current_reason).publish_state(id(bms0).getLimitedChargeCurrentReason());
-                      if (id(limited_discharge_current_reason).state != id(bms0).getLimitedDischargeCurrentReason()) id(limited_discharge_current_reason).publish_state(id(bms0).getLimitedDischargeCurrentReason());
+                      // limited_charge_current_reason
+                      if (   !${dual_bms}
+                          || !id(charging_switch_2).state
+                          || id(bms0).getLimitedChargeCurrent() < id(bms1).getLimitedChargeCurrent()
+                         )
+                      {
+                        if (id(limited_charge_current_reason).state != id(bms0).getLimitedChargeCurrentReason()) id(limited_charge_current_reason).publish_state(id(bms0).getLimitedChargeCurrentReason());
+                      } else {
+                        if (id(limited_charge_current_reason).state != id(bms1).getLimitedChargeCurrentReason()) id(limited_charge_current_reason).publish_state(id(bms1).getLimitedChargeCurrentReason());
+                      }
 
-                      if (id(limited_charge_voltage_reason).state != id(bms0).getLimitedChargeVoltageReason()) id(limited_charge_voltage_reason).publish_state(id(bms0).getLimitedChargeVoltageReason());
-                      if (id(limited_discharge_voltage_reason).state != id(bms0).getLimitedDischargeVoltageReason()) id(limited_discharge_voltage_reason).publish_state(id(bms0).getLimitedDischargeVoltageReason());
+                      // limited_discharge_current_reason
+                      if (   !${dual_bms}
+                          || !id(discharging_switch_2).state
+                          || id(bms0).getLimitedDischargeCurrent() < id(bms1).getLimitedDischargeCurrent() 
+                         )
+                      {
+                        if (id(limited_discharge_current_reason).state != id(bms0).getLimitedDischargeCurrentReason()) id(limited_discharge_current_reason).publish_state(id(bms0).getLimitedDischargeCurrentReason());
+                      } else {
+                        if (id(limited_discharge_current_reason).state != id(bms1).getLimitedDischargeCurrentReason()) id(limited_discharge_current_reason).publish_state(id(bms1).getLimitedDischargeCurrentReason());
+                      }
+
+
+                      // limited_charge_voltage_reason
+                      if (   !${dual_bms}
+                          || !id(charging_switch_2).state
+                          || id(bms0).getLimitedChargeVoltage() < id(bms1).getLimitedChargeVoltage()
+                         )
+                      {
+                        if (id(limited_charge_voltage_reason).state != id(bms0).getLimitedChargeVoltageReason()) id(limited_charge_voltage_reason).publish_state(id(bms0).getLimitedChargeVoltageReason());
+                      } else {
+                        if (id(limited_charge_voltage_reason).state != id(bms1).getLimitedChargeVoltageReason()) id(limited_charge_voltage_reason).publish_state(id(bms1).getLimitedChargeVoltageReason());
+                      }
+
+                      // limited_discharge_voltage_reason
+                      if (   !${dual_bms}
+                          || !id(discharging_switch_2).state
+                          || id(bms0).getLimitedDischargeVoltage() > id(bms1).getLimitedDischargeVoltage()
+                         )
+                      {
+                        if (id(limited_discharge_voltage_reason).state != id(bms0).getLimitedDischargeVoltageReason()) id(limited_discharge_voltage_reason).publish_state(id(bms0).getLimitedDischargeVoltageReason());
+                      } else {
+                        if (id(limited_discharge_voltage_reason).state != id(bms1).getLimitedDischargeVoltageReason()) id(limited_discharge_voltage_reason).publish_state(id(bms1).getLimitedDischargeVoltageReason());
+                      }
+                      
 
                       if (id(charging_status).state != id(charge_status)) {
                         id(charging_status).publish_state(id(charge_status));
@@ -838,6 +966,10 @@ interval:
 
                       ESP_LOGI("main", "send can id: 0x351 hex: %x %x %x %x %x %x %x %x", can_mesg[0], can_mesg[1], can_mesg[2], can_mesg[3], can_mesg[4], can_mesg[5], can_mesg[6], can_mesg[7]);
                       ESP_LOGI("main", "send can id: Charge Status %s", id(charge_status).c_str());
+
+                      // REMOVE REMOVE REMOVE
+                      id(canStepCounter) = 0;
+
                       return {can_mesg[0], can_mesg[1], can_mesg[2], can_mesg[3], can_mesg[4], can_mesg[5], can_mesg[6], can_mesg[7]};
             - if:
                 condition:
@@ -950,6 +1082,7 @@ interval:
                       #data: [0x47, 0x4F, 0x4F, 0x44, 0x57, 0x45, 0x20, 0x20] # "GOODWE"
                       #data: [0x50, 0x59, 0x4C, 0x4F, 0x4E, 0x20, 0x20, 0x20] # "PYLON"
                       data: [0X4A, 0X4B, 0x20, 0x42, 0x4D, 0x53, 0x20, 0x20] # "JK BMS"
+                      # PYLON_US2000B 
                   - lambda: |- # Detect no CAN reply
                       id(canStepCounter) = 0;
 
@@ -1043,7 +1176,7 @@ sensor:
   # NTC Aditional BMS Wire Temperature Sensor
   - platform: adc
     id: source_sensor
-    pin: GPIO2
+    pin: GPIO4 # GPIO2
     update_interval: never
     attenuation: 12dB
   - platform: resistance
@@ -2845,6 +2978,7 @@ script:
       - lambda: |-
           if (id(trigger_timer_for_next_balancing_script).is_running()) id(trigger_timer_for_next_balancing_script).stop();
           id(next_top_balance_value) = 0;
+          if(id(next_top_balance).state != "0s") id(next_top_balance).publish_state("0s");          
       - delay: ${absorption_time}s
       - lambda: |-
           if (id(days_between_balancing).state > 0) {
@@ -2860,6 +2994,21 @@ script:
       - delay: !lambda |-
           float secondsToNextBalance = fmax(0, (id(days_between_balancing).state * 24 * 60 * 60) - (12 * 60 * 60)); // days - 12 hours
           id(next_top_balance_value) = round(id(uptime_sensor).raw_state) + secondsToNextBalance;
+         
+          int seconds = fmax(0, id(next_top_balance_value) - round(id(uptime_sensor).raw_state));
+          int days = seconds / (24 * 3600);
+          seconds = seconds % (24 * 3600);
+          int hours = seconds / 3600;
+          seconds = seconds % 3600;
+          int minutes = seconds /  60;
+          seconds = seconds % 60;
+          id(next_top_balance).publish_state( ( (days ? to_string(days) + "d " : "") +
+                                                (hours ? to_string(hours) + "h " : "") +
+                                                (minutes ? to_string(minutes) + "m " : "") +
+                                                (to_string(seconds) + "s")
+                                              ).c_str()
+                                            );
+         
           return secondsToNextBalance * 1000;
       - lambda: |-
           id(inverter_top_balance).publish_state(true);

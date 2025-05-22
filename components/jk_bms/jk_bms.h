@@ -628,6 +628,7 @@ class JkBms : public PollingComponent, public jk_modbus::JkModbusDevice {
   float minDischarge;
 
   uint16_t publish_all_states_counter_ = 0;
+  bool last_data_was_valid = true;
 
   void on_status_data_(const std::vector<uint8_t> &data);
   void publish_state_(binary_sensor::BinarySensor *binary_sensor, const bool &state);
