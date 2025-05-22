@@ -105,7 +105,7 @@ void JkBms::on_status_data_(const std::vector<uint8_t> &data) {
   
   for (uint8_t i = 0; i < cells; i++) {
     cellVoltages[i] = (float) jk_get_16bit(i * 3 + 3) * 0.001f;
-    average_cell_voltage = average_cell_voltage + cell_voltage;
+    average_cell_voltage = average_cell_voltage + cellVoltages[i];
     if (cellVoltages[i] < min_cell_voltage) {
       min_cell_voltage = cellVoltages[i];
       min_voltage_cell = i + 1;
