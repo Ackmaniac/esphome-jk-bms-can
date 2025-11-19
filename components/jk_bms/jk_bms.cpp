@@ -128,6 +128,24 @@ void JkBms::on_status_data_(const std::vector<uint8_t> &data) {
       this->last_data_was_valid = false;
       return;
     }
+    float tempPowerTube = get_temperature_(jk_get_16bit(offset + 3 * 0));
+    if (tempPowerTube > 150 || tempPowerTube < -50) {
+      ESP_LOGW(TAG, "Invalid too high or too low power tube temperature, ignore data!");
+      this->last_data_was_valid = false;
+      return;
+    }
+    float tempSensor1 = get_temperature_(jk_get_16bit(offset + 3 * 1));
+    if (tempSensor1 > 150 || tempSensor1 < -50) {
+      ESP_LOGW(TAG, "Invalid too high or too low tempSensor1 temperature, ignore data!");
+      this->last_data_was_valid = false;
+      return;
+    }
+    float tempSensor2 = get_temperature_(jk_get_16bit(offset + 3 * 2));
+    if (tempSensor2 > 150 || tempSensor2 < -50) {
+      ESP_LOGW(TAG, "Invalid too high or too low tempSensor2 temperature, ignore data!");
+      this->last_data_was_valid = false;
+      return;
+    }
   } else {
     this->last_data_was_valid = true;
   }
