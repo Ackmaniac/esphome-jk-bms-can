@@ -38,49 +38,28 @@ BINARY_SENSORS = [
 CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(CONF_JK_BMS_ID): cv.use_id(JkBms),
-        cv.Optional(CONF_CHARGING): binary_sensor.BINARY_SENSOR_SCHEMA.extend(
-            {
-                cv.GenerateID(): cv.declare_id(binary_sensor.BinarySensor),
-                cv.Optional(CONF_ICON, default=ICON_CHARGING): cv.icon,
-            }
+        cv.Optional(CONF_CHARGING): binary_sensor.binary_sensor_schema(
+            icon=ICON_CHARGING,
         ),
-        cv.Optional(CONF_CHARGING_SWITCH): binary_sensor.BINARY_SENSOR_SCHEMA.extend(
-            {
-                cv.GenerateID(): cv.declare_id(binary_sensor.BinarySensor),
-                cv.Optional(CONF_ICON, default=ICON_CHARGING_SWITCH): cv.icon,
-            }
+        cv.Optional(CONF_CHARGING_SWITCH): binary_sensor.binary_sensor_schema(
+            icon=ICON_CHARGING_SWITCH,
         ),
-        cv.Optional(CONF_DISCHARGING): binary_sensor.BINARY_SENSOR_SCHEMA.extend(
-            {
-                cv.GenerateID(): cv.declare_id(binary_sensor.BinarySensor),
-                cv.Optional(CONF_ICON, default=ICON_DISCHARGING): cv.icon,
-            }
+        cv.Optional(CONF_DISCHARGING): binary_sensor.binary_sensor_schema(
+            icon=ICON_DISCHARGING,
         ),
-        cv.Optional(CONF_DISCHARGING_SWITCH): binary_sensor.BINARY_SENSOR_SCHEMA.extend(
-            {
-                cv.GenerateID(): cv.declare_id(binary_sensor.BinarySensor),
-                cv.Optional(CONF_ICON, default=ICON_DISCHARGING_SWITCH): cv.icon,
-            }
+        cv.Optional(CONF_DISCHARGING_SWITCH): binary_sensor.binary_sensor_schema(
+            icon=ICON_DISCHARGING_SWITCH,
         ),
-        cv.Optional(CONF_BALANCING): binary_sensor.BINARY_SENSOR_SCHEMA.extend(
-            {
-                cv.GenerateID(): cv.declare_id(binary_sensor.BinarySensor),
-                cv.Optional(CONF_ICON, default=ICON_BALANCING): cv.icon,
-            }
+        cv.Optional(CONF_BALANCING): binary_sensor.binary_sensor_schema(
+            icon=ICON_BALANCING,
         ),
-        cv.Optional(CONF_BALANCING_SWITCH): binary_sensor.BINARY_SENSOR_SCHEMA.extend(
-            {
-                cv.GenerateID(): cv.declare_id(binary_sensor.BinarySensor),
-                cv.Optional(CONF_ICON, default=ICON_BALANCING_SWITCH): cv.icon,
-            }
+        cv.Optional(CONF_BALANCING_SWITCH): binary_sensor.binary_sensor_schema(
+            icon=ICON_BALANCING_SWITCH,
         ),
         cv.Optional(
             CONF_DEDICATED_CHARGER_SWITCH
-        ): binary_sensor.BINARY_SENSOR_SCHEMA.extend(
-            {
-                cv.GenerateID(): cv.declare_id(binary_sensor.BinarySensor),
-                cv.Optional(CONF_ICON, default=ICON_DEDICATED_CHARGER_SWITCH): cv.icon,
-            }
+        ): binary_sensor.binary_sensor_schema(
+            icon=ICON_DEDICATED_CHARGER_SWITCH,
         ),
     }
 )
