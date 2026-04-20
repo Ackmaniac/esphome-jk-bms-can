@@ -102,6 +102,8 @@ void JkBms::on_status_data_(const std::vector<uint8_t> &data) {
   float maxCellVoltageToCheck = this->max_cell_voltage_sensor_->get_state() + 0.15f;
   float minCellVoltageToCheck = this->min_cell_voltage_sensor_->get_state() - 0.15f;
   float cellVoltages[cells];
+
+  uint16_t offset = data[1] + 3;
   
   for (uint8_t i = 0; i < cells; i++) {
     cellVoltages[i] = (float) jk_get_16bit(i * 3 + 3) * 0.001f;
@@ -164,8 +166,6 @@ void JkBms::on_status_data_(const std::vector<uint8_t> &data) {
   this->publish_state_(this->min_voltage_cell_sensor_, (float) min_voltage_cell);
   this->publish_state_(this->delta_cell_voltage_sensor_, max_cell_voltage - min_cell_voltage);
   this->publish_state_(this->average_cell_voltage_sensor_, average_cell_voltage);
-
-  uint16_t offset = data[1] + 3;
 
   // 0x80 0x00 0x1D: Read power tube temperature                 29°C                      1.0 °C
   // --->  99 = 99°C, 100 = 100°C, 101 = -1°C, 140 = -40°C
