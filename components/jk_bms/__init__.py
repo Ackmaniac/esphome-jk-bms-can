@@ -20,7 +20,7 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_ENABLE_FAKE_TRAFFIC, default=False): cv.boolean,
         }
     )
-    .extend(cv.polling_component_schema("1s"))
+    .extend(cv.polling_component_schema("2s"))
     .extend(jk_modbus.jk_modbus_device_schema(0x4E))
 )
 
