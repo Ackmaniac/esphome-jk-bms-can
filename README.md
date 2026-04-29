@@ -274,28 +274,18 @@ entities:
 ```
 type: entities
 entities:
-  - entity: sensor.hjdc_charging_status
-    name: Charging Status
-  - entity: number.hjdc_balance_voltage
-    name: Balance Voltage
-  - entity: number.hjdc_min_discharge_voltage
-    name: Min Discharge Voltage
-  - entity: number.hjdc_charging_current_max
-    name: Charging Current Max
-  - entity: number.hjdc_discharging_current_max
-    name: Discharging Current Max
-  - entity: switch.hjdc_charging_enabled
-    name: Charging Enabled
-  - entity: switch.hjdc_discharge_enabled
-    name: Discharge Enabled
-  - entity: switch.hjdc_charging_top_balance
-    name: Charging top balance
-  - entity: number.hjdc_days_between_balancing
-    name: Days Between Balancing
-  - entity: number.hjdc_max_charge
-    name: Max Charge %
-  - entity: number.hjdc_min_discharge
-    name: Min Discharge %
+  - entity: sensor.hjdc_send_inverter_charge_current
+    name:
+      type: entity
+  - entity: sensor.hjdc_send_inverter_discharge_current
+    name:
+      type: entity
+  - entity: sensor.hjdc_send_inverter_charge_voltage
+    name:
+      type: entity
+  - entity: sensor.hjdc_send_inverter_discharge_voltage
+    name:
+      type: entity
 ```
 
 ## Phase Power<br>
