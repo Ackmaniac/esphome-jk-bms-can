@@ -402,11 +402,6 @@ class JkBms : public PollingComponent, public jk_modbus::JkModbusDevice {
         }
 
         if ((maxCellVoltage <= cellStartBalanceVoltage || maxCellVoltage < overRecoveryVoltage - 0.010) && chargeVoltage != limitedChargeVoltage) {
-          ESP_LOGI("main",
-                   "INCREASE: max=%f start=%f recovery=%f",
-                   maxCellVoltage,
-                   cellStartBalanceVoltage,
-                   overRecoveryVoltage);
           limitedChargeVoltage += 0.1;
           chargeVoltageCounter = 10; // set counter for 10 seconds
         }
