@@ -416,7 +416,9 @@ class JkBms : public PollingComponent, public jk_modbus::JkModbusDevice {
       ESP_LOGI("main", "charge limited by %s to %.1f", limitText, uint16_t(limitedChargeVoltage * 10) / 10.0f);
     } else {
       strcpy(limitedChargeVoltageReason," ");
-      limitedChargeVoltage = chargeVoltage;
+      if (limitedChargeVoltage > chargeVoltage) {
+        limitedChargeVoltage = chargeVoltage;
+      }
     }
   }
 
